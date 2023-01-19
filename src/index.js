@@ -8,108 +8,84 @@
 // in other words, if you refresh the page, it's okay that the new ramen is no longer on the page.
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderRamen();
-    addSubmitListener();
-})
+function getRamen(){
+    fetch("http://localhost:3000/ramens")
+    .then((r) => r.json())
+    .then((data) => renderRamen(data));
+  }
 
-fetch('http://localhost:3000/ramens')
-.then(response => response.json())
-.then(data => {
-    renderRamen(data);
+  getRamen()
+  const ramenDetail = document.querySelector("#ramen-detail");
 
-    ramenDetails(data[0])
-});
+  const ramenMenu = document.querySelector("#ramen-menu");
+  const detailImage = document.querySelector(".detail-image");
+  const ramenName = document.querySelector(".name");
+  const restaurant = document.querySelector('.restaurant')
+  const ramenRating = document.querySelector('#rating-display')
+  const ramenComment = document.querySelector('#comment-display')
 
-
-function addSubmitListener() {
-    const ramenForm = document.getElementById("new-ramen");
-
-    ramenForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        addNewRamen();
-        ramenForm.reset();
+  const deleteButton = document.createElement('button');
+deleteButton.textContent = 'delete'
+ramenDetail.append(deleteButton)
+  
+    function renderRamen(ramens) {
+        ramens.forEach((ramen) => {
+          const img = document.createElement("img");
+          img.src = ramen.image;
+          img.addEventListener("click", () => {
+            detailImage.src = ramen.image;
+            ramenName.textContent = ramen.name;
+            restaurant.textContent = ramen.restaurant;
+            ramenRating.textContent = ramen.rating;
+            ramenComment.textContent = ramen.comment;
+          });
+        ramenMenu.append(img);
     })
 }
+        
+       
 
-function displayRamens() {
-    // fetch ramens from database
-    fetch("http://localhost:3000/ramens")
-        .then(res => res.json())
-        .then(ramens => {
-            ramens.forEach(ramen => renderRamen(ramen))       
-            showRamenDetails(ramens[0]);
-        })
-}
-function renderRamen(ramen){
-    
-        const menuRamen = document.querySelector('#ramen-menu')
-        const newRamen = document.createElement('div');
-        const ramenImg = document.createElement('img');
-
-        ramenImg.src = ramen.image 
-
-        menuRamen.append(ramenImg);
-        menuRamen.append(newRamen);
-
-        ramenImg.addEventListener("click", () => ramenDetails(ramen));
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'delete';
-        deleteButton.className = 'delete-btn';
-        newRamen.append(deleteButton);
-
-        deleteButton.addEventListener('click', () => deleteRamen(ramen,id.newRamen));
-}
-
-function ramenDetails(ramen){
-   
-
-        const imageDetail = document.getElementById("detail-image");
-        const nameDetail = document.getElementById("detail-name");
-        const restaurantDetail = document.getElementById("detail-restaurant");
-        const ratingDetail = document.getElementById("detail-rating");
-        const commentDetail = document.getElementById("detail-comment");
-
-
-            imageDetail.src = ramen.image;
-            nameDetail.textContent = ramen.name;
-            restaurantDetail.textContent = ramen.restaurant;
-            ratingDetail.textContent = ramen.rating;
-            commentDetail.textContent = ramen.comment;
-}
 
 const init = () => {
-    const form =document.querySelector('form');
+    const form =document.querySelector('#new-ramen');
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-        const nameInput = event.target.name.value;
-        const restaurantInput = event.target.restaurant.value;
-        const imageInput = event.target.image.value;
-        const ratingInput = event.target.rating.value;
         
-        const newObj = {
-            name: nameInput,
-            restaurant: restaurantInput,
-            image: imageInput,
-            rating: ratingInput
+        let ramenObj = {
+        name: event.target.name.value,
+        restaurant: event.target.restaurant.value,
+        image: event.target.image.value,
+        rating: event.target['new comment'].value
         }
         fetch('http://localhost:3000/ramens', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(newObj)
+            body: JSON.stringify(ramenObj)
         })
         .then(response => response.json())
-        .then(ramenObj => renderRamen([ramenObj]))
+        .then(newObj => renderRamen([newObj]))
     });
 }
 
 
-function deleteRamen(id, newRamen){
-    fetch(`http://localhost:3000/ramens/${id}`, {
+deleteButton.addEventListener('click', ()=>{
+    fetch(`http://localhost:3000/ramens/${deleteButton.id}`, {
         method: 'DELETE',
-        headers: {'Content-Type': 'application/json'}
-    })
-}
-newRamen.remove();
+        headers: {'Content-Type': 'application/json'},
+      })
+      .then(r => r.json())
+      .then(() => {
+        getRamen()
+        detailImage.src = './assets/image-placeholder.jpg'
+        ramenName.textContent = 'Insert Name Here'
+        restaurant.textContent = 'Insert Restaurant Here'
+        ramenRating.textContent = 'Insert rating here';
+        ramenComment.textContent = 'Insert comment here';
+        detailImage.id = ''
+        deleteButton.id = ''
+      })
+  })
+
+renderRamen();
 init();
+deleteRamen();
